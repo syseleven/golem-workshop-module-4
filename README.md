@@ -1,12 +1,4 @@
-# Best Practices
+# Dive-In Kubernetes: Access Management & Security Concepts
 
-* We already saw a few in our production grade deployment
-  * Affinities
-  * Probes
-  * Resource requests & limits
-  * Horizontal Pod Autoscaler
-* Pod Security Context
-* Network Policies
-* Pod Security Policies -> deprecated in favor of [Open Policy Agent](https://github.com/open-policy-agent/opa) or [Kyverno](https://github.com/kyverno/kyverno)
-* (Namespace Limits)
-* [Popeye](https://github.com/derailed/popeye)
+## Beschreibungstext
+Ziel dieses Dive-In Workshops ist es, euch die Grundlagen von Access Management und Security Konzepte innerhalb von Kubernetes näherzubringen.
