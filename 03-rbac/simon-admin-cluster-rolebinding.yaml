@@ -10,4 +10,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: simon-admin
+  # namespace erklärt auf welches Namespace sich die ClusterRoleBinding beziehen soll
   namespace: default
