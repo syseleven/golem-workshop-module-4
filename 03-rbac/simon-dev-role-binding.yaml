@@ -10,4 +10,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: simon-dev
+  # namespace erklärt auf welches Namespace sich die RoleBinding beziehen soll
   namespace: dev
