@@ -101,6 +101,8 @@ brew install reactiveops/tap/rbac-lookup
 
 ## Cleanup
 
-kubectl delete -f simon-admin-cluster-role.yaml simon-admin-cluster-rolebinding.yaml simon-dev-role.yaml simon-dev-role-binding.yaml
+```shell
+kubectl delete -f simon-admin-cluster-role.yaml -f simon-admin-cluster-rolebinding.yaml -f simon-dev-role.yaml -f simon-dev-role-binding.yaml
 kubectl delete namespace dev
 kubectl delete serviceaccount simon-dev simon-admin
+```
