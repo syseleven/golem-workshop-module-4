@@ -3,7 +3,8 @@
 ## Create namespace example
 
 ```sh
-kubectl create namespace <YOUR_NAME>-limits
+kubectl create namespace <YOURNAME>-limits
+kubectl label namespace <YOURNAME>-limits golem-workshop=true
 ```
 
 ## Deploy Quota and Limits
