@@ -25,6 +25,8 @@ kubectl create -f simon-admin-cluster-rolebinding.yaml
 
 kubectl create namespace dev
 
+kubectl label namespace dev golem-workshop=true
+
 kubectl -n dev create serviceaccount simon-dev
 
 kubectl -n dev get serviceaccounts simon-dev -o yaml
