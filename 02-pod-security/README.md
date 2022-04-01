@@ -3,7 +3,8 @@
 * Create your personal Namespace
 
 ```shell
-kubectl create namespace <YOUR_NAME>
+kubectl create namespace <YOURNAME>
+kubectl label namespace <YOURNAME> golem-workshop=true
 ```
 
 * Set default namespace to context
