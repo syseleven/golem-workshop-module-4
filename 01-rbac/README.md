@@ -87,6 +87,10 @@ kubectl config use-context simon-dev
 kubectl config use-context simon-admin
 ```
 
+## Verify the permissions for the serviceaccount
+
+`kubectl auth can-i get pods --as=system:serviceaccount:dev:simon-dev -n dev`
+
 ## Install the RBAC-Manager
 
 ```shell
