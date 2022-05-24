@@ -1,11 +1,10 @@
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   labels:
     kubernetes.io/bootstrapping: rbac-defaults
-  name: simon-dev
-  namespace: dev
+  name: MYNAME-admin
 rules:
 - apiGroups:
   - ""
@@ -23,7 +22,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - nodes
+  - nodes 
   verbs:
   - get
   - list
