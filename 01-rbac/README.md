@@ -53,11 +53,11 @@ export KUBECONFIG=~/.kube/configs/workshopcluster
   * Add user with right token and add context to use
 
 ```shell
-kubectl config set-credentials ${MYNAME}-admin --token="${CLUSTERADMINTOKEN}"
-kubectl config set-context --cluster=CLUSTERID --user=${MYNAME}-admin ${MYNAME}-admin
-
 # get clusterid by using this command
-kubectl config get-clusters
+CLUSTERID=$(kubectl config view -o jsonpath="{.clusters[].name}")
+
+kubectl config set-credentials ${MYNAME}-admin --token="${CLUSTERADMINTOKEN}"
+kubectl config set-context --cluster=${CLUSTERID} --user=${MYNAME}-admin ${MYNAME}-admin
 ```
 
 * Observe the changes in your kubeconfig
@@ -174,6 +174,7 @@ kubectl config use-context ${MYNAME}-dev
 # Test some commands
 kubectl get nodes
 kubectl get pods -n default
+kubectl -n ${MYNAME}-dev run test-pod --image=nginx
 kubectl get pods -n ${MYNAME}-dev
 ```
 
@@ -232,7 +233,7 @@ rbac-lookup ${MYNAME}
 ### Cleanup
 
 ```shell
-kubectl delete -f simon-admin-cluster-role.yaml -f simon-admin-cluster-rolebinding.yaml -f simon-dev-role.yaml -f simon-dev-role-binding.yaml
-kubectl delete namespace dev
-kubectl delete serviceaccount simon-dev simon-admin
+kubectl delete -f admin-cluster-role.yaml -f admin-cluster-rolebinding.yaml -f dev-role.yaml -f dev-role-binding.yaml
+kubectl delete namespace ${MYNAME}-dev
+kubectl delete serviceaccount ${MYNAME}-dev ${MYNAME}-admin
 ```
