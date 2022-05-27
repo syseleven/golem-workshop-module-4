@@ -2,48 +2,126 @@
 
 ## Create admin service account with clusterrole binding
 
+* Set `MYNAME` variable to your name to use in future commands
+
 ```shell
-kubectl create serviceaccount simon-admin
+MYNAME="myname"
+```
 
-kubectl get serviceaccounts simon-admin -o yaml
+* Create admin `serviceaccount`
 
-kubectl describe secret $(kubectl get secret | grep simon-admin | awk '{print $1}')
-kubectl get secrets simon-admin-token-XXXXX -o jsonpath="{.data.token}" |base64 --decode
+```shell
+kubectl create serviceaccount ${MYNAME}-admin
 
-# Alternative: kubectl get secrets $(kubectl get secret | grep simon-admin | awk '{print $1}') -o jsonpath="{.data.token}" |base64 --decode
+kubectl get serviceaccounts ${MYNAME}-admin -o yaml
+```
 
-# Please leave this Token open for later usage
+* Get token for the serviceaccount
 
-kubectl create -f simon-admin-cluster-role.yaml
+```shell
+SECRETNAME=$(kubectl get secret | grep "${MYNAME}-admin" | awk '{print $1}')
+kubectl describe secret ${SECRETNAME}
+CLUSTERADMINTOKEN=$(kubectl get secrets ${SECRETNAME} -o jsonpath="{.data.token}" | base64 --decode)
+```
 
-kubectl create -f simon-admin-cluster-rolebinding.yaml
+* Replace occurences of `MYNAME` with your name in files `admin-cluster-role.yaml` and `admin-cluster-rolebinding.yaml`
+* Also replace `MYNAMESPACE` in `admin-cluster-rolebinding.yaml` with your namespace name
+* create `clusterrole` and `clusterrolebinding`
+
+```shell
+kubectl create -f admin-cluster-role.yaml
+kubectl create -f admin-cluster-rolebinding.yaml
+```
+
+### Test admin service account with clusterrolebinding
+
+* Copy your current kubeconfig file (for safety reasons)
+
+```shell
+# for example like this
+cp ~/.kube/config ~/.kube/config.BAK
+```
+
+* Only when using kubectx
+  * Make sure you only have the path for the workshop cluster in your `$KUBECONFIG` environment variable
+
+```shell
+export KUBECONFIG=~/.kube/configs/workshopcluster
+```
+
+* Use imperative `kubectl` commands to modify your used kubeconfig
+  * Add user with right token and add context to use
+
+```shell
+# get clusterid by using this command
+kubectl config get-clusters
+
+kubectl config set-credentials ${MYNAME}-admin --token="${CLUSTERADMINTOKEN}"
+kubectl config set-context --cluster=${CLUSTERID} --user=${MYNAME}-admin ${MYNAME}-admin
+```
+
+* Observe the changes in your kubeconfig
+
+```shell
+# look into your kubeconfig file directly
+cat ~/.kube/config
+
+# use kubectl command to show config
+kubectl config view
+```
+
+* Use the context
+
+```shell
+kubectl config use-context ${MYNAME}-admin
+
+# Test some commands
+kubectl get pods -n MYNAMESPACE
+kubectl get pods -n kube-system
+kubectl get nodes
+```
+
+* Switch back to workshop context
+
+```shell
+# find name for the context
+kubectl config get-contexts
+
+# switch active context like this
+kubectl config use-context admin@k8s-workshopXXX/golem-workshop-XXXXX
 ```
 
 ## Create service account with rolebinding limited to dev namespace
 
+* Create additional namespace
+
 ```shell
-
-kubectl create namespace dev
-
-kubectl label namespace dev golem-workshop=true
-
-kubectl -n dev create serviceaccount simon-dev
-
-kubectl -n dev get serviceaccounts simon-dev -o yaml
-
-kubectl -n dev get secrets $(kubectl -n dev get secret | grep simon-dev | awk '{print $1}') -o jsonpath="{.data.token}" |base64 --decode
-
-# Please leave this Token open for later usage
-
-kubectl -n dev create -f simon-dev-role.yaml
-
-kubectl -n dev create -f simon-dev-role-binding.yaml
+kubectl create namespace ${MYNAME}-dev
+kubectl label namespace ${MYNAME}-dev golem-workshop=true
 ```
 
-* What is the difference between simon-dev-role.yaml and simon-admin-cluster-role.yaml?
+* Create new `serviceaccount`
+* Retrieve token for serviceaccount
 
 ```shell
-sdiff --suppress-common-lines simon-dev-role.yaml simon-admin-cluster-role.yaml | colordiff
+kubectl -n ${MYNAME}-dev create serviceaccount ${MYNAME}-dev
+kubectl -n ${MYNAME}-dev get serviceaccounts ${MYNAME}-dev -o yaml
+
+DEVELOPERTOKEN=$(kubectl -n ${MYNAME}-dev get secrets $(kubectl -n ${MYNAME}-dev get secret | grep ${MYNAME}-dev | awk '{print $1}') -o jsonpath="{.data.token}" | base64 --decode)
+```
+
+* Replace occurences of `MYNAME` with your name in files `dev-role.yaml` and `dev-role-binding.yaml`
+* Create developer `role` and `rolebinding`
+
+```shell
+kubectl -n ${MYNAME}-dev create -f dev-role.yaml
+kubectl -n ${MYNAME}-dev create -f dev-role-binding.yaml
+```
+
+* What is the difference between `dev-role.yaml` and `admin-cluster-role.yaml`?
+
+```shell
+sdiff --suppress-common-lines dev-role.yaml admin-cluster-role.yaml | colordiff
 
 kind: Role                                                    | kind: ClusterRole
   name: simon-dev                                             |   name: simon-admin
@@ -51,64 +129,111 @@ kind: Role                                                    | kind: ClusterRol
   - nodes                                                     |   - nodes 
 ```
 
-## Add the user simon-admin and the context to your kubeconfig file
+### Test developer service account with rolebinding
+
+* Copy your current kubeconfig file (for safety reasons)
 
 ```shell
-kubectl config set-credentials simon-admin --token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjM1RjNrTXNJdFM2S1IwRGYyZGlzX0NzdXVXZkU4c3BEQVEzckdNa09nLTgifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkamFyb3NjaCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJzaW1vbi1hZG1pbi10b2tlbi01bXg5ZyIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJzaW1vbi1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjQwNGY2ZWViLTdhZjctNDBmNS1hY2IxLWVlZTQyNzQ0NjRmYyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkamFyb3NjaDpzaW1vbi1hZG1pbiJ9.hkRQeiiUEo-nOxNvx0uZk9dEqjKrWs_5YpCbOJHw4mDzby3CnQLFe7YvGevyVuTHr6FeplCfLAVLwZHFp0HbpwcDJoTQlhPiamePVSJu8B0W3UbG1OXKuDmyDuob25A7o6vOBucLW4TOTxM7sLpo7Vd7Nrkflyi20A371ef7uNzAVBYUWmfcf5zoke8bDQLloMody6ylOe9ReG0k_jRBC-IAhibShBX4yV8_cqKO1xPQ48J2OtYzwin3mMsk22gbLVIUqjrkEzK_9YAamy_o_ut-KV1z6WxjjoRQ41MQQK21qgP7lLSgF6HvBf5jiiDtJT0n5ANeb8tYq2Ln3FJciw'
-
-kubectl config set-context --cluster=nv7j4tdnqm --user=simon-admin simon-admin
+# for example like this
+cp ~/.kube/config ~/.kube/config.BAK
 ```
 
-## Add the user simon-dev and the context to your kubeconfig file
+* Only when using kubectx
+  * Make sure you only have the path for the workshop cluster in your `$KUBECONFIG` environment variable
 
 ```shell
-kubectl config set-credentials simon-dev --token='eyJhbGciOiJSUzI1NiIsImtpZCI6IjM1RjNrTXNJdFM2S1IwRGYyZGlzX0NzdXVXZkU4c3BEQVEzckdNa09nLTgifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZXYiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoic2ltb24tZGV2LXRva2VuLW5sbDZwIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6InNpbW9uLWRldiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjhkYWVhMWU3LTZkMmMtNGJkNy04MzFmLWM3YzMwY2Q0ODIwYSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZXY6c2ltb24tZGV2In0.NgYCan9tF_dmzUXtYHFgdMIJbr3H6yHrMa0MvAQETPCdo1Q2SYSmMtiNg31yc8COXVB2JB5pl5AERcmVEtD6G2QcR_Fe50kDAQrnWgE546TGQrCIvJCLil9bSBS_38q0n2xYY7i7qtdr4vA6nxrlfaRHfDQvqffAYN9S6Vi8YNSmBSvYy5NnG7q3QywoS4DFZ8PFAnvs5YX3QWapzGTHhXrIVT4UUDxHmahe2LFG2Uv4qCgSXZa6KksNfzeLsrqHaNRt-YgVNwjDwFO7xeCeYHgHeCbzBZIu7_uzOkQTh1AVkfgfGi60KgCRoYQQr64RjPnL7f30QO0bX-qzLSKsbQ'
-
-kubectl config set-context --cluster=nv7j4tdnqm --user=simon-dev simon-dev
+export KUBECONFIG=~/.kube/configs/workshopcluster
 ```
 
-## A context can also include an optional namespace
+* Use imperative `kubectl` commands to modify your used kubeconfig
+  * Add user with right token and add context to use
 
 ```shell
-kubectl config set-context --cluster=nv7j4tdnqm --user=simon-dev --namespace=dev simon-dev
+kubectl config set-credentials ${MYNAME}-dev --token="${DEVELOPERTOKEN}"
+kubectl config set-context --cluster=CLUSTERID --user=${MYNAME}-dev ${MYNAME}-dev
+
+# get clusterid by using this command
+kubectl config get-clusters
 ```
 
-## Switching contexts
-
-### Switch to user simon-dev
+* Observe the changes in your kubeconfig
 
 ```shell
-kubectl config use-context simon-dev
+# look into your kubeconfig file directly
+cat ~/.kube/config
+
+# use kubectl command to show config
+kubectl config view
 ```
 
-### Switch to user simon-admin
+* Use the context
 
 ```shell
-kubectl config use-context simon-admin
+kubectl config use-context ${MYNAME}-dev
+
+# Test some commands
+kubectl get nodes
+kubectl get pods -n default
+kubectl -n ${MYNAME}-dev run test-pod --image=nginx
+kubectl get pods -n ${MYNAME}-dev
 ```
 
-## Verify the permissions for the serviceaccount
+* Only works in namespace we configured it for
+* Check permissions using `kubectl`
 
-`kubectl auth can-i get pods --as=system:serviceaccount:dev:simon-dev -n dev`
+```shell
+kubectl auth can-i get pods --as=system:serviceaccount:${MYNAME}-dev:${MYNAME}-dev -n ${MYNAME}-dev
+kubectl auth can-i get pods --as=system:serviceaccount:${MYNAME}-dev:${MYNAME}-dev -n default
+kubectl auth can-i list nodes --as=system:serviceaccount:${MYNAME}-dev:${MYNAME}-dev
+```
 
-## Install the RBAC-Manager
+* Switch back to workshop context
+
+```shell
+# find name for the context
+kubectl config get-contexts
+
+# switch active context like this
+kubectl config use-context admin@k8s-workshopXXX/golem-workshop-XXXXX
+```
+
+---
+
+## Optional content
+
+### Install the RBAC-Manager
+
+* NOTE: Can only be performed once per cluster
+* This installs the CRD `rbacdefinitions.rbacmanager.reactiveops.io` and necessary controllers etc. to make RBAC a bit easier
+* For more information visit the [documentation](https://rbac-manager.docs.fairwinds.com/)
 
 ```shell
 helm repo add reactiveops-stable https://charts.reactiveops.com/stable
+helm repo update
 
-helm upgrade --install rbac-manager reactiveops-stable/rbac-manager --namespace rbac-manager
+helm upgrade --install rbac-manager reactiveops-stable/rbac-manager --namespace rbac-manager --create-namespace
 ```
 
-## Install RBAC Lookup
+### Install RBAC Lookup
+
+* This is a local CLI tool to make searching through and visualization of RBAC components more handy
+
+* Install
 
 ```shell
 brew install reactiveops/tap/rbac-lookup
 ```
 
-## Cleanup
+* Example usage
 
 ```shell
-kubectl delete -f simon-admin-cluster-role.yaml -f simon-admin-cluster-rolebinding.yaml -f simon-dev-role.yaml -f simon-dev-role-binding.yaml
-kubectl delete namespace dev
-kubectl delete serviceaccount simon-dev simon-admin
+rbac-lookup ${MYNAME}
+```
+
+### Cleanup
+
+```shell
+kubectl delete -f admin-cluster-role.yaml -f admin-cluster-rolebinding.yaml -f dev-role.yaml -f dev-role-binding.yaml
+kubectl delete namespace ${MYNAME}-dev
+kubectl delete serviceaccount ${MYNAME}-dev ${MYNAME}-admin
 ```

@@ -2,13 +2,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: serviceaccounts-admin
+  name: MYNAME-admin
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: simon-admin
+  name: MYNAME-admin
 subjects:
 - kind: ServiceAccount
-  name: simon-admin
+  name: MYNAME-admin
   # namespace erklärt auf welches Namespace sich die ClusterRoleBinding beziehen soll
-  namespace: default
+  namespace: MYNAMESPACE
