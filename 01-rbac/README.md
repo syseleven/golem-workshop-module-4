@@ -54,7 +54,7 @@ export KUBECONFIG=~/.kube/configs/workshopcluster
 
 ```shell
 # get clusterid by using this command
-CLUSTERID=$(kubectl config view -o jsonpath="{.clusters[].name}")
+kubectl config get-clusters
 
 kubectl config set-credentials ${MYNAME}-admin --token="${CLUSTERADMINTOKEN}"
 kubectl config set-context --cluster=${CLUSTERID} --user=${MYNAME}-admin ${MYNAME}-admin
