@@ -39,10 +39,10 @@ i.e.
 Connecting to web-application.djarosch (10.240.26.60:80)
 ```
 
-* Edit the newly <YOUR_NAME>-policy namespace and add the label `network-policy/web-application: allow`, then deploy the allow-web-application.yaml
+* add the label `network-policy/web-application: allow` to you newly created policy-namespace, then deploy the allow-web-application.yaml
 
 ```shell
-kubectl edit namespace <YOUR_NAME>-policy
+kubectl label namespace <YOUR_NAME>-policy network-policy/web-application=allow
 kubectl apply -f allow-web-application.yaml
 ```
 
