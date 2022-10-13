@@ -153,7 +153,7 @@ export KUBECONFIG=~/.kube/configs/workshopcluster
 
 ```shell
 kubectl config set-credentials ${MYNAME}-dev --token="${DEVELOPERTOKEN}"
-kubectl config set-context --cluster=CLUSTERID --user=${MYNAME}-dev ${MYNAME}-dev
+kubectl config set-context --cluster=${CLUSTERID} --user=${MYNAME}-dev ${MYNAME}-dev
 
 # get clusterid by using this command
 kubectl config get-clusters
