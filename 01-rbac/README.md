@@ -16,12 +16,24 @@ kubectl create serviceaccount ${MYNAME}-admin
 kubectl get serviceaccounts ${MYNAME}-admin -o yaml
 ```
 
-* Get token for the serviceaccount
+* Create the token used for authentication with the serviceaccount
 
 ```shell
-SECRETNAME=$(kubectl get secret | grep "${MYNAME}-admin" | awk '{print $1}')
-kubectl describe secret ${SECRETNAME}
-CLUSTERADMINTOKEN=$(kubectl get secrets ${SECRETNAME} -o jsonpath="{.data.token}" | base64 --decode)
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${MYNAME}-admin
+  annotations:
+    kubernetes.io/service-account.name: ${MYNAME}-admin
+type: kubernetes.io/service-account-token
+EOF
+```
+
+* Retrieve the token for the serviceaccount
+
+```shell
+CLUSTERADMINTOKEN=$(kubectl get secrets ${MYNAME}-admin -o jsonpath="{.data.token}" | base64 --decode) && echo ${CLUSTERADMINTOKEN}
 ```
 
 * Replace occurences of `MYNAME` with your name in files `admin-cluster-role.yaml` and `admin-cluster-rolebinding.yaml`
@@ -101,16 +113,27 @@ kubectl config use-context admin@k8s-workshopXXX/golem-workshop-XXXXX
 ```shell
 kubectl create namespace ${MYNAME}-dev
 kubectl label namespace ${MYNAME}-dev golem-workshop=true
+kubectl config set-context --current --namespace=${MYNAME}-dev
 ```
 
 * Create new `serviceaccount`
-* Retrieve token for serviceaccount
+* Create and retrieve token for serviceaccount
 
 ```shell
 kubectl -n ${MYNAME}-dev create serviceaccount ${MYNAME}-dev
-kubectl -n ${MYNAME}-dev get serviceaccounts ${MYNAME}-dev -o yaml
 
-DEVELOPERTOKEN=$(kubectl -n ${MYNAME}-dev get secrets $(kubectl -n ${MYNAME}-dev get secret | grep ${MYNAME}-dev | awk '{print $1}') -o jsonpath="{.data.token}" | base64 --decode)
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${MYNAME}-dev
+  namespace: ${MYNAME}-dev
+  annotations:
+    kubernetes.io/service-account.name: ${MYNAME}-dev
+type: kubernetes.io/service-account-token
+EOF
+
+DEVELOPERTOKEN=$(kubectl -n ${MYNAME}-dev get secrets ${MYNAME}-dev -o jsonpath="{.data.token}" | base64 --decode) && echo ${DEVELOPERTOKEN}
 ```
 
 * Replace occurences of `MYNAME` with your name in files `dev-role.yaml` and `dev-role-binding.yaml`
@@ -121,7 +144,7 @@ kubectl -n ${MYNAME}-dev create -f dev-role.yaml
 kubectl -n ${MYNAME}-dev create -f dev-role-binding.yaml
 ```
 
-* What is the difference between `dev-role.yaml` and `admin-cluster-role.yaml`?
+* Optional: What is the difference between `dev-role.yaml` and `admin-cluster-role.yaml`?
 
 ```shell
 sdiff --suppress-common-lines dev-role.yaml admin-cluster-role.yaml | colordiff
