@@ -5,9 +5,10 @@
 * Before you begin with the actual exercise please make sure to follow these steps to work in your own environment:
 
   ```shell
-  kubectl create ns <YOURNAME>
-  kubectl label namespace <YOURNAME> golem-workshop=true
-  kubectl config set-context --current --namespace=<YOURNAME>
+  export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
+  kubectl create ns ${YOURNAME}
+  kubectl label namespace ${YOURNAME} golem-workshop=true
+  kubectl config set-context --current --namespace=${YOURNAME}
   ```
 
 * Clone this repository to your working station and change into the directory for this exercise
@@ -43,6 +44,12 @@
 ## Exercise
 
 **Important!** The following examples can be performed by **all participants** of this course.
+
+* Also make sure to set this variable in your shell session windows:
+
+  ```shell
+  export YOURNAME=<YOURNAME>
+  ```
 
 ## Example 1 - Service account with namespace permissions
 
@@ -80,6 +87,8 @@
 
 * Acces the dashboard by visiting the URL:
   [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
+
+* Use your token to log in
 
 * Tasks
   * Browse the dashboard, there should be objects in your namespace like pods, etc.
@@ -130,9 +139,23 @@
 * Acces the dashboard by visiting the URL:
   [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
 
+* Use your token to log in
+
 * Tasks
   * Browse the dashboard, there should be objects in your namespace like pods, etc.
   * switch to another namespace like kube-system and you should be able to obtain all ressources
   * sign out of the dashboard
 
 * You have finished this example.
+
+---
+
+# Cleanup (optional)
+
+```shell
+kubectl -n ${YOURNAME} delete sa serviceaccount ${YOURNAME}-user ${YOURNAME}-admin
+kubectl -n ${YOURNAME} delete role ${YOURNAME}-user-role
+kubectl -n ${YOURNAME} delete rolebinding ${YOURNAME}-user-rolebinding
+kubectl delete clusterrolebinding ${YOURNAME}-admin-clusterrolebinding
+kubectl delete -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+```
