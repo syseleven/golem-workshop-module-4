@@ -1,265 +1,138 @@
-# Role based access control
+# Role based access control (RBAC)
 
-## Create admin service account with clusterrole binding
+## Preparation
 
-* Set `MYNAME` variable to your name to use in future commands
+* Before you begin with the actual exercise please make sure to follow these steps to work in your own environment:
 
-```shell
-MYNAME="myname"
-```
+  ```shell
+  kubectl create ns <YOURNAME>
+  kubectl label namespace <YOURNAME> golem-workshop=true
+  kubectl config set-context --current --namespace=<YOURNAME>
+  ```
 
-* Create admin `serviceaccount`
+* Clone this repository to your working station and change into the directory for this exercise
 
-```shell
-kubectl create serviceaccount ${MYNAME}-admin
+## Prerequisites
 
-kubectl get serviceaccounts ${MYNAME}-admin -o yaml
-```
+### Deploy the kubernetes dashboard
 
-* Create the token used for authentication with the serviceaccount
+**Important!** This task should only be done by **1 participant** of this course.
 
-```shell
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ${MYNAME}-admin
-  annotations:
-    kubernetes.io/service-account.name: ${MYNAME}-admin
-type: kubernetes.io/service-account-token
-EOF
-```
+* Deploy the dashboard
 
-* Retrieve the token for the serviceaccount
+  ```shell
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+  ```
 
-```shell
-CLUSTERADMINTOKEN=$(kubectl get secrets ${MYNAME}-admin -o jsonpath="{.data.token}" | base64 --decode) && echo ${CLUSTERADMINTOKEN}
-```
+* Connect to the kubernetes API
 
-* Replace occurences of `MYNAME` with your name in files `admin-cluster-role.yaml` and `admin-cluster-rolebinding.yaml`
-* Also replace `MYNAMESPACE` in `admin-cluster-rolebinding.yaml` with your namespace name
-* create `clusterrole` and `clusterrolebinding`
+  ```shell
+  kubectl proxy
+  ```
 
-```shell
-kubectl create -f admin-cluster-role.yaml
-kubectl create -f admin-cluster-rolebinding.yaml
-```
+* Visit URL:
+  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
 
-### Test admin service account with clusterrolebinding
+* Notice there are 2 different login options (Token and kubeconfig) - we will use Token later in this example
 
-* Copy your current kubeconfig file (for safety reasons)
-
-```shell
-# for example like this
-cp ~/.kube/config ~/.kube/config.BAK
-```
-
-* Only when using kubectx
-  * Make sure you only have the path for the workshop cluster in your `$KUBECONFIG` environment variable
-
-```shell
-export KUBECONFIG=~/.kube/configs/workshopcluster
-```
-
-* Use imperative `kubectl` commands to modify your used kubeconfig
-  * Add user with right token and add context to use
-
-```shell
-# get clusterid by using this command
-kubectl config get-clusters
-
-# export CLUSTERID with your workshop-CLUSTERID
-export CLUSTERID=xxxxxxxx
-
-kubectl config set-credentials ${MYNAME}-admin --token="${CLUSTERADMINTOKEN}"
-kubectl config set-context --cluster=${CLUSTERID} --user=${MYNAME}-admin ${MYNAME}-admin
-```
-
-* Observe the changes in your kubeconfig
-
-```shell
-# look into your kubeconfig file directly
-cat ~/.kube/config
-
-# use kubectl command to show config
-kubectl config view
-```
-
-* Use the context
-
-```shell
-kubectl config use-context ${MYNAME}-admin
-
-# Test some commands
-kubectl get pods -n MYNAMESPACE
-kubectl get pods -n kube-system
-kubectl get nodes
-```
-
-* Switch back to workshop context
-
-```shell
-# find name for the context
-kubectl config get-contexts
-
-# switch active context like this
-kubectl config use-context admin@k8s-workshopXXX/golem-workshop-XXXXX
-```
-
-## Create service account with rolebinding limited to dev namespace
-
-* Create additional namespace
-
-```shell
-kubectl create namespace ${MYNAME}-dev
-kubectl label namespace ${MYNAME}-dev golem-workshop=true
-kubectl config set-context --current --namespace=${MYNAME}-dev
-```
-
-* Create new `serviceaccount`
-* Create and retrieve token for serviceaccount
-
-```shell
-kubectl -n ${MYNAME}-dev create serviceaccount ${MYNAME}-dev
-
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ${MYNAME}-dev
-  namespace: ${MYNAME}-dev
-  annotations:
-    kubernetes.io/service-account.name: ${MYNAME}-dev
-type: kubernetes.io/service-account-token
-EOF
-
-DEVELOPERTOKEN=$(kubectl -n ${MYNAME}-dev get secrets ${MYNAME}-dev -o jsonpath="{.data.token}" | base64 --decode) && echo ${DEVELOPERTOKEN}
-```
-
-* Replace occurences of `MYNAME` with your name in files `dev-role.yaml` and `dev-role-binding.yaml`
-* Create developer `role` and `rolebinding`
-
-```shell
-kubectl -n ${MYNAME}-dev create -f dev-role.yaml
-kubectl -n ${MYNAME}-dev create -f dev-role-binding.yaml
-```
-
-* Optional: What is the difference between `dev-role.yaml` and `admin-cluster-role.yaml`?
-
-```shell
-sdiff --suppress-common-lines dev-role.yaml admin-cluster-role.yaml | colordiff
-
-kind: Role                                                    | kind: ClusterRole
-  name: simon-dev                                             |   name: simon-admin
-  namespace: dev                                              <
-  - nodes                                                     |   - nodes 
-```
-
-### Test developer service account with rolebinding
-
-* Copy your current kubeconfig file (for safety reasons)
-
-```shell
-# for example like this
-cp ~/.kube/config ~/.kube/config.BAK
-```
-
-* Only when using kubectx
-  * Make sure you only have the path for the workshop cluster in your `$KUBECONFIG` environment variable
-
-```shell
-export KUBECONFIG=~/.kube/configs/workshopcluster
-```
-
-* Use imperative `kubectl` commands to modify your used kubeconfig
-  * Add user with right token and add context to use
-
-```shell
-kubectl config set-credentials ${MYNAME}-dev --token="${DEVELOPERTOKEN}"
-kubectl config set-context --cluster=${CLUSTERID} --user=${MYNAME}-dev ${MYNAME}-dev
-
-# get clusterid by using this command
-kubectl config get-clusters
-```
-
-* Observe the changes in your kubeconfig
-
-```shell
-# look into your kubeconfig file directly
-cat ~/.kube/config
-
-# use kubectl command to show config
-kubectl config view
-```
-
-* Use the context
-
-```shell
-kubectl config use-context ${MYNAME}-dev
-
-# Test some commands
-kubectl get nodes
-kubectl get pods -n default
-kubectl -n ${MYNAME}-dev run test-pod --image=nginx
-kubectl get pods -n ${MYNAME}-dev
-```
-
-* Only works in namespace we configured it for
-* Check permissions using `kubectl`
-
-```shell
-kubectl auth can-i get pods --as=system:serviceaccount:${MYNAME}-dev:${MYNAME}-dev -n ${MYNAME}-dev
-kubectl auth can-i get pods --as=system:serviceaccount:${MYNAME}-dev:${MYNAME}-dev -n default
-kubectl auth can-i list nodes --as=system:serviceaccount:${MYNAME}-dev:${MYNAME}-dev
-```
-
-* Switch back to workshop context
-
-```shell
-# find name for the context
-kubectl config get-contexts
-
-# switch active context like this
-kubectl config use-context admin@k8s-workshopXXX/golem-workshop-XXXXX
-```
+* Leave your browser window and your shell session with `kubectl proxy` open and use a second shell window for the 
+  following example 
 
 ---
 
-## Optional content
+## Exercise
 
-### Install the RBAC-Manager
+**Important!** The following examples can be performed by **all participants** of this course.
 
-* NOTE: Can only be performed once per cluster
-* This installs the CRD `rbacdefinitions.rbacmanager.reactiveops.io` and necessary controllers etc. to make RBAC a bit easier
-* For more information visit the [documentation](https://rbac-manager.docs.fairwinds.com/)
+## Example 1 - Service account with namespace permissions
 
-```shell
-helm repo add reactiveops-stable https://charts.reactiveops.com/stable
-helm repo update
+* Create a service account in your namespace
 
-helm upgrade --install rbac-manager reactiveops-stable/rbac-manager --namespace rbac-manager --create-namespace
-```
+  ```shell
+  kubectl -n ${YOURNAME} create serviceaccount ${YOURNAME}-user
+  ```
 
-### Install RBAC Lookup
+* First edit the role manifest `user-role.yaml` and adjust your name!
 
-* This is a local CLI tool to make searching through and visualization of RBAC components more handy
+* Now apply the manifest to create a role with user permissions in your namespace
+  ```shell
+  kubectl -n ${YOURNAME} apply -f user-role.yaml
+  ```
 
-* Install
+* Now connect your service account with that role by creating a rolebinding
 
-```shell
-brew install reactiveops/tap/rbac-lookup
-```
+  ```shell
+  kubectl -n ${YOURNAME} create rolebinding ${YOURNAME}-user-rolebinding --role=${YOURNAME}-user-role --serviceaccount=${YOURNAME}:${YOURNAME}-user
+  ```
 
-* Example usage
+* Obtain a token for you service account
 
-```shell
-rbac-lookup ${MYNAME}
-```
+  ```shell
+  kubectl -n ${YOURNAME} create token ${YOURNAME}-user
+  ```
 
-### Cleanup
+* Result is something like `eyJhbGciOiJSUzI1NiIsImtpZCI6ImVW...`
 
-```shell
-kubectl delete -f admin-cluster-role.yaml -f admin-cluster-rolebinding.yaml -f dev-role.yaml -f dev-role-binding.yaml
-kubectl delete namespace ${MYNAME}-dev
-kubectl delete serviceaccount ${MYNAME}-dev ${MYNAME}-admin
-```
+* Copy your token and paste it on [jwt.io](https://jwt.io)
+  * Observe the contents of the token
+
+## Access the dashboard with user permission
+
+* Acces the dashboard by visiting the URL:
+  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
+
+* Tasks
+  * Browse the dashboard, there should be objects in your namespace like pods, etc.
+  * switch to another namespace like kube-system and you should not be able to obtain ressources
+  * sign out of the dashboard
+
+* You have finished this example.
+
+---
+
+## Example 2 - Service account with cluster-wide permissions
+
+* Create a service account in your namespace
+
+  ```shell
+  kubectl -n ${YOURNAME} create serviceaccount ${YOURNAME}-admin
+  ```
+
+* By default there are several roles and clusterroles with different permissions in Kubernetes
+
+* Observe some of these
+
+  ```shell
+  kubectl get clusterrole cluster-admin edit view
+  kubectl describe clusterrole cluster-admin
+  ```
+
+* Notice that a `cluster-admin` is allowed to manage every k8s resource
+
+* Now connect the service account with this clusterrole by creating a clusterrolebinding
+
+  ```shell
+  kubectl -n ${YOURNAME} create clusterrolebinding ${YOURNAME}-admin-clusterrolebinding --clusterrole=cluster-admin --serviceaccount=${YOURNAME}:${YOURNAME}-admin
+  ```
+
+* Obtain token for the admin serviceaccount
+
+  ```shell
+  kubectl -n ${YOURNAME} create token ${YOURNAME}-admin
+  ```
+
+* Result is something like `eyAvbFcrOiBDUzI1NiIsIatgZWI6IgUH...`
+
+* Copy your token
+
+## Access the dashboard with admin permission
+
+* Acces the dashboard by visiting the URL:
+  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
+
+* Tasks
+  * Browse the dashboard, there should be objects in your namespace like pods, etc.
+  * switch to another namespace like kube-system and you should be able to obtain all ressources
+  * sign out of the dashboard
+
+* You have finished this example.

@@ -4,8 +4,8 @@ kind: Role
 metadata:
   labels:
     kubernetes.io/bootstrapping: rbac-defaults
-  name: MYNAME-dev
-  namespace: MYNAME-dev
+  name: <YOURNAME>-user-role # <- please replace with YOURNAME
+  namespace: <YOURNAME> # please replace with YOURNAME
 rules:
 - apiGroups:
   - ""
