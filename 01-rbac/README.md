@@ -1,5 +1,11 @@
 # Role based access control (RBAC)
 
+## Tasks
+
+* Deploy the kubernetes dashboard
+* Create service accounts with different permissions
+* and test them on the dashboard
+
 ## Preparation
 
 * Before you begin with the actual exercise please make sure to follow these steps to work in your own environment:
