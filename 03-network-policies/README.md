@@ -1,76 +1,93 @@
 # network-policies
 
-* Let's create a namespace for our needs and switch into it
+## Tasks
 
-```shell
-kubectl create namespace <YOURNAME>
-kubectl label namespace <YOURNAME> golem-workshop=true
-kubectl config set-context --current --namespace="${YOUR_NAMESPACE}"
-```
+* Create a web-application
+* Apply network policies to deny or allow traffic to the web-application
 
-* Apply web-application deployment (and service)
+## Preparation
 
-```shell
-kubectl apply -f web-application-deployment.yaml
-```
+* Before you begin with the actual exercise please make sure to follow these steps to work in your own environment:
+
+  ```shell
+  export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
+  kubectl create ns ${YOURNAME}
+  kubectl label namespace ${YOURNAME} golem-workshop=true
+  kubectl config set-context --current --namespace=${YOURNAME}
+  ```
+
+---
+
+## Exercise
+
+### Deploy the application
+
+* Deploy the web-application
+
+  ```shell
+  kubectl apply -f web-application-deployment.yaml
+  ```
+
+### Deny traffic to it
 
 * Deny all traffic to web-application labeled pods
 
-```shell
-kubectl apply -f deny-all.yaml
-```
+  ```shell
+  kubectl apply -f deny-all.yaml
+  ```
 
-* Start a busybox container pod in different namespace **in a different shell**
+* Start a busybox pod in a different namespace (use a different shell)
 
-```shell
-kubectl create namespace <YOUR_NAME>-policy
-kubectl run -n <YOUR_NAME>-policy -it --image busybox network-policy-test -- sh
+  ```shell
+  kubectl create namespace ${YOURNAME}-policy
+  kubectl run -n ${YOURNAME}-policy -it --image busybox network-policy-test -- sh
+  
+  # In the pod: Try to access your web-application
+  wget -O- -q web-application.<YOURNAME> # <- replace with your name
+  ```
 
-# In the pod: Try to reach your web-application
-wget -O- -q web-application.<YOUR_NAME>
-```
+* Notice the request time out
 
-* See that it times out
+  ```text
+  Connecting to web-application.<YOURNAME> (10.240.26.60:80)
+  ```
 
-i.e.
+* Exit the busybox pod with `exit`
 
-```shell
-/ # wget -O- web-application.djarosch
-Connecting to web-application.djarosch (10.240.26.60:80)
-```
+---
 
-* add the label `network-policy/web-application: allow` to you newly created policy-namespace, then deploy the allow-web-application.yaml
+### Allow traffic to it
 
-```shell
-kubectl label namespace <YOUR_NAME>-policy network-policy/web-application=allow
-kubectl apply -f allow-web-application.yaml
-```
+* Add the label `network-policy/web-application: allow` to your newly created policy-namespace
 
-i.e.
+  ```shell
+  kubectl label namespace ${YOURNAME}-policy network-policy/web-application=allow
+  ```
 
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    ...
-    network-policy/web-application: allow
-  name: djarosch-policy
-...
-```
+* then deploy a network policy to allow some traffic by applying `allow-web-application.yaml`
 
-* In your test pod, see that it works again:
+  ```shell
+  kubectl apply -f allow-web-application.yaml
+  ```
 
-```shell
-kubectl -n <YOUR_NAME>-policy exec -it network-policy-test -- sh
-wget -q -O- web-application.<YOUR_NAME>
-```
+* In your busybox test pod, see that it works again:
 
-* Remove the test setup
+  ```shell
+  kubectl -n ${YOURNAME}-policy exec -it network-policy-test -- sh
+  wget -q -O- web-application.<YOUR_NAME> # <- replace with YOUR NAME accordingly
+  ```
+
+* Exit the busybox pod with `exit`
+
+* You have finished this example.
+
+---
+
+## Cleanup (optional)
 
 ```shell
 kubectl delete -f allow-web-application.yaml && \
 kubectl delete -f deny-all.yaml && \
 kubectl delete -f web-application-deployment.yaml && \
-kubectl delete ns <YOUR_NAME>-policy
+kubectl delete ns ${YOURNAME}-policy
 ```
