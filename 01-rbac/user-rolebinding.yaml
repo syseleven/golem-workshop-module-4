@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <YOURNAME>-user-rolebinding # <- please replace with YOURNAME
+  namespace: <YOURNAME> # <- please replace with YOURNAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: <YOURNAME>-user-role # <- please replace with YOURNAME
+subjects:
+- kind: ServiceAccount
+  name: <YOURNAME>-user # <- please replace with YOURNAME
+  namespace: <YOURNAME> # <- please replace with YOURNAME
