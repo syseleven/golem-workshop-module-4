@@ -89,7 +89,7 @@
 * Copy your token and paste it on [jwt.io](https://jwt.io)
   * Observe the contents of the token
 
-## Access the dashboard with user permission
+## Access the dashboard with namespace permission
 
 * Acces the dashboard by visiting the URL:
   [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
@@ -140,7 +140,7 @@
 
 * Copy your token
 
-## Access the dashboard with admin permission
+## Access the dashboard with cluster-wide permission
 
 * Acces the dashboard by visiting the URL:
   [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
@@ -153,6 +153,33 @@
   * sign out of the dashboard
 
 * You have finished this example.
+
+---
+
+## Example 3 - Verify permissions with kubectl
+
+### Task: Verify via kubectl if permissions are correctly set
+
+* Basic "command" to verify permissions of service accounts
+
+  ```shell
+  kubectl auth can-i get <K8s-RESOURCE> --as=system:serviceaccount:<SERVICEACCOUNT-NAMESPACE>:<SERVICEACCOUNT-NAME> -n <TARGET-NAMESPACE>
+  ```
+
+* Example commands
+
+  ```shell
+  # test if your own user service account can get pods in your own namespace
+  kubectl auth can-i get pods --as=system:serviceaccount:${YOURNAME}:${YOURNAME}-user -n ${YOURNAME}
+
+  # test if your own user service account can get pods in the default namespace 
+  kubectl auth can-i get pods --as=system:serviceaccount:${YOURNAME}:${YOURNAME}-user -n default
+  
+  # test if your own admin service account can delete pods in the kube-system namespace 
+  kubectl auth can-i get pods --as=system:serviceaccount:${YOURNAME}:${YOURNAME}-admin -n kube-system
+  ```
+
+* Test various combinations of permissions and actions
 
 ---
 
