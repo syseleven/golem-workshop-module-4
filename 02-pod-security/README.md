@@ -31,3 +31,22 @@
     kubectl describe pod/security-context-demo-...
     kubectl logs security-context-demo-...
     ```
+
+## Solution
+
+<details><summary>Contents of deployment.yaml</summary>
+
+```yaml
+# ...
+spec:
+  containers:
+  - image: httpd:2.4.57
+    imagePullPolicy: Always
+    name: httpd
+    securityContext:
+      runAsUser: 0 # set ID of user root
+      runAsNonRoot: false
+      readOnlyRootFilesystem: false # set to false to make log directory writeable
+```
+
+</details>
