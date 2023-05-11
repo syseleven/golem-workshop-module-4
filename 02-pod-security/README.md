@@ -1,28 +1,33 @@
 # Pod Security Contexts
 
-* Create your personal Namespace
+## Preparation
 
-```shell
-kubectl create namespace <YOURNAME>
-kubectl label namespace <YOURNAME> golem-workshop=true
-```
+* Before you begin with the actual exercise please make sure to follow these steps to work in your own environment:
 
-* Set default namespace to context
+  ```shell
+  export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
+  kubectl create ns ${YOURNAME}
+  kubectl label namespace ${YOURNAME} golem-workshop=true
+  kubectl config set-context --current --namespace=${YOURNAME}
+  ```
 
-```shell
-kubectl config set-context --current --namespace=<YOUR_NAME>
-```
+---
+
+## Deploy
 
 * Apply Deployment and check creating Pods
   
-```shell
-kubectl apply -f deployment.yaml
-kubectl get pods -w # watch kubectl get pod -o wide
-```
+  ```shell
+  kubectl apply -f deployment.yaml
+  kubectl get pods -w
+  ```
 
-* See that container does not startup and find out why, fix error
+## Analyze
 
-```shell
-kubectl describe pod/security-context-demo-...
-kubectl logs security-context-demo-...
-```
+* See that container does not startup and find out why
+  * Hint: There is more than 1 error...
+
+    ```shell
+    kubectl describe pod/security-context-demo-...
+    kubectl logs security-context-demo-...
+    ```
