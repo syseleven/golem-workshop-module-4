@@ -5,7 +5,7 @@ metadata:
     run: token-test-pod
   name: token-test-pod
 spec:
-  automountServiceAccountToken: false
+  # automountServiceAccountToken: false
   containers:
   - image: nginx
     name: token-test-pod
