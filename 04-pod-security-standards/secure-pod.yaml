@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: secure-pod
+    exercise: security
+  name: secure-pod
+spec:
+  # reduce attack surface
+  automountServiceAccountToken: false
+  # on Pod level
+  securityContext:
+    # must be supported by image
+    runAsNonRoot: true
+  containers:
+  # we use a special root-less image
+  - image: nginxinc/nginx-unprivileged:1.25-alpine
+    name: secure-pod
+    volumeMounts:
+    - mountPath: /tmp
+      name: tmp-volume
+    # on Container level
+    securityContext:
+      # fs read-only
+      readOnlyRootFilesystem: true
+      # run container as privileged
+      privileged: false
+      # enforce Linux kernel feature "no_new_privs"
+      allowPrivilegeEscalation: false
+      # control Linux capabilities
+      capabilities:
+        drop: ["SYS_TIME", "NET_ADMIN"]
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  # add emptydir volumes for application to work
+  volumes:
+  - name: tmp-volume
+    emptyDir:
+      sizeLimit: 50Mi

@@ -7,7 +7,6 @@
   ```shell
   export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
   kubectl create ns ${YOURNAME}
-  kubectl label namespace ${YOURNAME} golem-workshop=true
   kubectl config set-context --current --namespace=${YOURNAME}
   ```
 

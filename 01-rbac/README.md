@@ -13,11 +13,12 @@
   ```shell
   export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
   kubectl create ns ${YOURNAME}
-  kubectl label namespace ${YOURNAME} golem-workshop=true
   kubectl config set-context --current --namespace=${YOURNAME}
   ```
 
 * Clone this repository to your working station and change into the directory for this exercise
+
+---
 
 ## Prerequisites
 
@@ -68,8 +69,15 @@
 * First edit the role manifest `user-role.yaml` and adjust your name!
 
 * Now apply the manifest to create a role with user permissions in your namespace
-  ```shell
+
+* ```shell
   kubectl -n ${YOURNAME} apply -f user-role.yaml
+  ```
+
+* Verify what permissions the user role offers
+
+  ```shell
+  kubectl describe  -f user-role.yaml 
   ```
 
 * Now connect your service account with that role by creating a rolebinding
@@ -186,7 +194,7 @@
 # Cleanup (optional)
 
 ```shell
-kubectl -n ${YOURNAME} delete sa serviceaccount ${YOURNAME}-user ${YOURNAME}-admin
+kubectl -n ${YOURNAME} delete serviceaccount ${YOURNAME}-user ${YOURNAME}-admin
 kubectl -n ${YOURNAME} delete role ${YOURNAME}-user-role
 kubectl -n ${YOURNAME} delete rolebinding ${YOURNAME}-user-rolebinding
 kubectl delete clusterrolebinding ${YOURNAME}-admin-clusterrolebinding
