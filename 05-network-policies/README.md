@@ -1,4 +1,4 @@
-# network-policies
+# Network Policies
 
 ## Tasks
 
@@ -12,7 +12,6 @@
   ```shell
   export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
   kubectl create ns ${YOURNAME}
-  kubectl label namespace ${YOURNAME} golem-workshop=true
   kubectl config set-context --current --namespace=${YOURNAME}
   ```
 
@@ -39,8 +38,8 @@
 * Start a busybox pod in a different namespace (use a different shell)
 
   ```shell
-  kubectl create namespace ${YOURNAME}-policy
-  kubectl run -n ${YOURNAME}-policy -it --image busybox network-policy-test -- sh
+  kubectl create namespace ${YOURNAME}-external
+  kubectl run -n ${YOURNAME}-external -it --image busybox network-policy-test -- sh
   
   # In the pod: Try to access your web-application
   wget -O- -q web-application.<YOURNAME> # <- replace with your name
@@ -58,13 +57,13 @@
 
 ### Allow traffic to it
 
-* Add the label `network-policy/web-application: allow` to your newly created policy-namespace
+* Add the label `network-policy/web-application: allow` to your newly created external-namespace
 
   ```shell
-  kubectl label namespace ${YOURNAME}-policy network-policy/web-application=allow
+  kubectl label namespace ${YOURNAME}-external network-policy/web-application=allow
   ```
 
-* then deploy a network policy to allow some traffic by applying `allow-web-application.yaml`
+* then deploy a network policy to your personal namespace to allow some external traffic by applying `allow-web-application.yaml`
 
   ```shell
   kubectl apply -f allow-web-application.yaml
@@ -73,7 +72,7 @@
 * In your busybox test pod, see that it works again:
 
   ```shell
-  kubectl -n ${YOURNAME}-policy exec -it network-policy-test -- sh
+  kubectl -n ${YOURNAME}-external exec -it network-policy-test -- sh
   wget -q -O- web-application.<YOUR_NAME> # <- replace with YOUR NAME accordingly
   ```
 
@@ -89,5 +88,5 @@
 kubectl delete -f allow-web-application.yaml && \
 kubectl delete -f deny-all.yaml && \
 kubectl delete -f web-application-deployment.yaml && \
-kubectl delete ns ${YOURNAME}-policy
+kubectl delete ns ${YOURNAME}-external
 ```

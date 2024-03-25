@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: insecure-pod
+    exercise: security
+  name: insecure-pod
+spec:
+  securityContext:
+    # allow running as root
+    runAsNonRoot: false
+  containers:
+  - image: nginx
+    name: insecure-pod
+    securityContext:
+      # might be insecure
+      privileged: true
+      # do not enforce Linux kernel feature "no_new_privs"
+      allowPrivilegeEscalation: true
+      # add higher privileged caps
+      capabilities:
+        add: ["SYS_TIME", "NET_ADMIN", "SYS_ADMIN"]
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
