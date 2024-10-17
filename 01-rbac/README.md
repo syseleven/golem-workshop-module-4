@@ -41,6 +41,16 @@
 * Visit URL:
   [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
 
+* <details><summary>Alternatively you can do a port-forward as usual</summary>
+
+  ```shell
+  kubectl port-forward svc/kubernetes-dashboard 8443:443
+  ```
+
+* Then you can visit the website via: [https://localhost:8443/](https://localhost:8443/) (you need to accept the SSL exception as there is no valid cert installed)
+
+  </details>
+
 * Notice there are 2 different login options (Token and kubeconfig) - we will use Token later in this example
 
 * Leave your browser window and your shell session with `kubectl proxy` open and use a second shell window for the 
