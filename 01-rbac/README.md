@@ -29,31 +29,32 @@
 * Deploy the dashboard
 
   ```shell
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+  # Add kubernetes-dashboard repository
+  helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+  # Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
+  helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
   ```
 
-* Connect to the kubernetes API
+* Option 1 - Connect to the kubernetes API via port-forward (we will use this!)
 
   ```shell
-  kubectl proxy
-  ```
-
-* Visit URL:
-  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
-
-* <details><summary>Alternatively you can do a port-forward as usual</summary>
-
-  ```shell
-  kubectl port-forward svc/kubernetes-dashboard 8443:443
+  kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
   ```
 
 * Then you can visit the website via: [https://localhost:8443/](https://localhost:8443/) (you need to accept the SSL exception as there is no valid cert installed)
 
-  </details>
+* Option 2 - Connect to the kubernetes API via proxy
 
-* Notice there are 2 different login options (Token and kubeconfig) - we will use Token later in this example
+  ```shell
+  kubectl proxy --port=8001
+  ```
 
-* Leave your browser window and your shell session with `kubectl proxy` open and use a second shell window for the 
+* Visit URL:
+  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard-kong-proxy:443/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard-kong-proxy:443/proxy/)
+
+---
+
+* Leave your browser window and your shell session with `kubectl port-forward...` open and use a second shell window for the 
   following example 
 
 ---
@@ -109,8 +110,8 @@
 
 ## Access the dashboard with namespace permission
 
-* Acces the dashboard by visiting the URL:
-  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
+* Access the dashboard by visiting the URL:
+  [https://localhost:8443](https://localhost:8443)
 
 * Use your token to log in
 
@@ -161,7 +162,7 @@
 ## Access the dashboard with cluster-wide permission
 
 * Acces the dashboard by visiting the URL:
-  [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/)
+  [https://localhost:8443](https://localhost:8443)
 
 * Use your token to log in
 
@@ -208,5 +209,5 @@ kubectl -n ${YOURNAME} delete serviceaccount ${YOURNAME}-user ${YOURNAME}-admin
 kubectl -n ${YOURNAME} delete role ${YOURNAME}-user-role
 kubectl -n ${YOURNAME} delete rolebinding ${YOURNAME}-user-rolebinding
 kubectl delete clusterrolebinding ${YOURNAME}-admin-clusterrolebinding
-kubectl delete -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+helm -n kubernetes-dashboard uninstall kubernetes-dashboard 
 ```
