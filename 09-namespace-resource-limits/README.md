@@ -42,15 +42,11 @@ kubectl scale deployment test-deployment --replicas 3 --namespace <YOURNAME>-lim
 
 See that only one pod can be created
 
-Create second deployment
+## Cleanup
 
 ```sh
 kubectl delete -f test-deployment.yaml -n <YOURNAME>-limits
-
-kubectl run test-app --image=nginxdemos/hello --namespace <YOURNAME>-limits --requests="cpu=2"
 ```
-
-See that pod can not be created
 
 ## Delete limits namespace again
 
