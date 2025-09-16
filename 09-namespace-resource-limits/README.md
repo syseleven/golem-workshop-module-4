@@ -5,7 +5,7 @@
 ```sh
 export YOURNAME=<YOURNAME> # <- please replace <YOURNAME> accordingly
 kubectl create namespace ${YOURNAME}-limits
-kubectl label namespace ${YOURNAME}-limits golem-workshop=true
+kubectl label namespace ${YOURNAME}-limits academy-workshop=true
 ```
 
 ---
